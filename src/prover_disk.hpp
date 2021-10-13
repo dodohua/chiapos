@@ -120,7 +120,6 @@ public:
 
     ~DiskProver()
     {
-        this->disk_file.close();
         std::lock_guard<std::mutex> l(_mtx);
         for (int i = 0; i < 6; i++) {
             Encoding::ANSFree(kRValues[i]);

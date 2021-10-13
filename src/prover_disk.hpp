@@ -235,9 +235,7 @@ public:
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
             if (p7_entries.empty()) {
-                disk_file.clear();
-                disk_file.sync();
-                return std::vector<LargeBits>();
+                return NULL;
             }
 
             // The last 5 bits of the challenge determine which route we take to get to

@@ -90,6 +90,7 @@ PYBIND11_MODULE(chiapos, m)
                 return py::bytes(reinterpret_cast<const char*>(id.data()), id.size());
             })
         .def("get_size", [](DiskProver &dp) { return dp.GetSize(); })
+        .def("close_GFile", [](DiskProver &dp) { return dp.CloseGFile(); })
         .def("get_filename", [](DiskProver &dp) { return dp.GetFilename(); })
         .def(
             "get_qualities_for_challenge",

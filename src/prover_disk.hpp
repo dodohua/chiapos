@@ -213,7 +213,7 @@ public:
         return qualities;
     }
 
-    LargeBits GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
+    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
 
@@ -235,7 +235,7 @@ public:
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
             if (p7_entries.empty()) {
-                return NULL;
+                return std::vector<LargeBits>();
             }
 
             // The last 5 bits of the challenge determine which route we take to get to
@@ -280,8 +280,8 @@ public:
                 uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s
                 if (iters < sp_interval_iters){
                     //find proof
-                    return GetFullProof(challenge,q_index,false);
-
+                    qualities.emplace_back(GetFullProof(challenge,q_index,false)) ;
+                    break;
                 }
                 q_index++;
 
@@ -290,7 +290,7 @@ public:
 //        disk_file.clear();
 //        disk_file.sync();
 
-        return NULL;
+        return qualities;
     }
 
     // Given a challenge, and an index, returns a proof of space. This assumes GetQualities was

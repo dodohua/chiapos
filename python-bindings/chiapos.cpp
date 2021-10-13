@@ -127,17 +127,20 @@ PYBIND11_MODULE(chiapos, m)
                 const uint8_t *challenge_ptr =
                     reinterpret_cast<const uint8_t *>(challenge_str.data());
                 py::gil_scoped_release release;
-                LargeBits proof =
+                std::vector<LargeBits> qualities =
                     dp.GetQualitiesForChallenge_proof(challenge_ptr, index, parallel_read);
-                if (NULL == proof) {
-                    return NULL;
-                }
                 py::gil_scoped_acquire acquire;
-                uint8_t *proof_buf = new uint8_t[Util::ByteAlign(64 * dp.GetSize()) / 8];
-                proof.ToBytes(proof_buf);
-                py::bytes ret = py::bytes(
-                    reinterpret_cast<char *>(proof_buf), Util::ByteAlign(64 * dp.GetSize()) / 8);
-                delete[] proof_buf;
+                std::vector<py::bytes> ret;
+                for (LargeBits proof : qualities) {
+                    uint8_t *proof_buf = new uint8_t[Util::ByteAlign(64 * dp.GetSize()) / 8];
+                    proof.ToBytes(proof_buf);
+                    py::bytes ret_byte = py::bytes(
+                        reinterpret_cast<char *>(proof_buf),
+                        Util::ByteAlign(64 * dp.GetSize()) / 8);
+                    ret.push_back(ret_byte);
+                    delete[] proof_buf;
+                }
+
                 return ret;
             },
             py::arg("challenge"),

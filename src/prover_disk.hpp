@@ -269,15 +269,15 @@ public:
                 std::vector<unsigned char> hash(picosha2::k_digest_size);
                 picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
 //                qualities.emplace_back(hash.data(), 32, 256);
-                quality = LargeBits(hash.data(), 32, 256);
+                LargeBits quality = LargeBits(hash.data(), 32, 256);
                 std::vector<unsigned char> hash_input_c(32 + 32, 0);
                 memcpy(hash_input_c.data(), quality, 32);
                 memcpy(hash_input_c.data()+32, quality, 32);
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
                 picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
                 uint64_t sp_quality_string_init = Util::EightBytesToInt(hash_c.data());
-                uint128_t pp_s = int(pow(2, 256))*((2 * prover_size) + 1) * (int(pow(2, prover_size-1)))
-                uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s
+                uint128_t pp_s = int(pow(2, 256))*((2 * prover_size) + 1) * (int(pow(2, prover_size-1)));
+                uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
                     qualities.emplace_back(GetFullProof(challenge,q_index,false)) ;

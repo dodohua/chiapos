@@ -156,10 +156,7 @@ public:
         std::lock_guard<std::mutex> l(_mtx);
 
         {
-//            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-            if (!disk_file.is_open()) {
-                disk_file.open(filename, std::ios::in | std::ios::binary);
-            }
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
 
 
             if (!disk_file.is_open()) {
@@ -302,10 +299,10 @@ public:
 
         std::lock_guard<std::mutex> l(_mtx);
         {
-//            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-            if (!disk_file.is_open()) {
-                disk_file.open(filename, std::ios::in | std::ios::binary);
-            }
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+//            if (!disk_file.is_open()) {
+//                disk_file.open(filename, std::ios::in | std::ios::binary);
+//            }
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
@@ -342,7 +339,6 @@ public:
 
 private:
     mutable std::mutex _mtx;
-    std::ifstream disk_file;
     std::string filename;
     std::vector<uint8_t> memo;
     std::vector<uint8_t> id;  // Unique plot id

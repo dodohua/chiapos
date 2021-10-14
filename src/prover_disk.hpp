@@ -256,9 +256,10 @@ public:
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
                 picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
                 uint64_t sp_quality_string_init = Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
-                uint128_t pp_256 = uint128_t(pow(2,256));;
+                uint128_t factor_pow = 0x80000000000000000ull;
+                uint128_t pp_256 = 0x10000000000000000000000000000000000000000000000000000000000000000ull;
                 uint128_t pp_s = pp_256*((2 * prover_size) + 1) * (uint64_t(pow(2, prover_size-1)));
-                uint128_t factor_pow = uint128_t(pow(2,DIFFICULTY_pow_FACTOR));
+
                 uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof

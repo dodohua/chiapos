@@ -55,10 +55,9 @@ public:
         struct plot_header header{};
         this->filename = filename;
 
-        std::ifstream disk_file_t(filename, std::ios::in | std::ios::binary);
-//        disk_file.open(filename, std::ios::in | std::ios::binary);
+        std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
 
-        if (!disk_file_t.is_open()) {
+        if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
         // 19 bytes  - "Proof of Space Plot" (utf-8)
@@ -69,7 +68,7 @@ public:
         // 2 bytes   - memo length
         // x bytes   - memo
 
-        SafeRead(disk_file_t, (uint8_t*)&header, sizeof(header));
+        SafeRead(disk_file, (uint8_t*)&header, sizeof(header));
         if (memcmp(header.magic, "Proof of Space Plot", sizeof(header.magic)) != 0)
             throw std::invalid_argument("Invalid plot header magic");
 
@@ -83,23 +82,23 @@ public:
         }
         memcpy(id.data(), header.id, sizeof(header.id));
         this->k = header.k;
-        SafeSeek(disk_file_t, offsetof(struct plot_header, fmt_desc) + fmt_desc_len);
+        SafeSeek(disk_file, offsetof(struct plot_header, fmt_desc) + fmt_desc_len);
 
         uint8_t size_buf[2];
-        SafeRead(disk_file_t, size_buf, 2);
+        SafeRead(disk_file, size_buf, 2);
         memo.resize(Util::TwoBytesToInt(size_buf));
-        SafeRead(disk_file_t, memo.data(), memo.size());
+        SafeRead(disk_file, memo.data(), memo.size());
 
         this->table_begin_pointers = std::vector<uint64_t>(11, 0);
         this->C2 = std::vector<uint64_t>();
 
         uint8_t pointer_buf[8];
         for (uint8_t i = 1; i < 11; i++) {
-            SafeRead(disk_file_t, pointer_buf, 8);
+            SafeRead(disk_file, pointer_buf, 8);
             this->table_begin_pointers[i] = Util::EightBytesToInt(pointer_buf);
         }
 
-        SafeSeek(disk_file_t, table_begin_pointers[9]);
+        SafeSeek(disk_file, table_begin_pointers[9]);
 
         uint8_t c2_size = (Util::ByteAlign(k) / 8);
         uint32_t c2_entries = (table_begin_pointers[10] - table_begin_pointers[9]) / c2_size;
@@ -111,10 +110,10 @@ public:
         // read from disk the C1 and C3 entries.
         auto* c2_buf = new uint8_t[c2_size];
         for (uint32_t i = 0; i < c2_entries - 1; i++) {
-            SafeRead(disk_file_t, c2_buf, c2_size);
+            SafeRead(disk_file, c2_buf, c2_size);
             this->C2.push_back(Bits(c2_buf, c2_size, c2_size * 8).Slice(0, k).GetValue());
         }
-        disk_file_t.close();
+
         delete[] c2_buf;
     }
 
@@ -135,8 +134,6 @@ public:
 
     uint8_t GetSize() const noexcept { return k; }
 
-
-
     // Given a challenge, returns a quality string, which is sha256(challenge + 2 adjecent x
     // values), from the 64 value proof. Note that this is more efficient than fetching all 64 x
     // values, which are in different parts of the disk.
@@ -148,7 +145,6 @@ public:
 
         {
             std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
@@ -194,11 +190,10 @@ public:
                 qualities.emplace_back(hash.data(), 32, 256);
             }
         }  // Scope for disk_file
-
         return qualities;
     }
 
-    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
+    std::vector<LargeBits> GetQualitiesForChallenge(const uint8_t* challenge)
     {
         std::vector<LargeBits> qualities;
 
@@ -206,10 +201,6 @@ public:
 
         {
             std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-//            if (!disk_file.is_open()) {
-//                disk_file.open(filename, std::ios::in | std::ios::binary);
-//            }
-
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
@@ -226,7 +217,8 @@ public:
             // The last 5 bits of the challenge determine which route we take to get to
             // our two x values in the leaves.
             uint8_t last_5_bits = challenge[31] & 0x1f;
-            int q_index = 0
+
+            uint32_t q_index = 0
 
             for (uint64_t position : p7_entries) {
                 // This inner loop goes from table 6 to table 1, getting the two backpointers,
@@ -272,11 +264,8 @@ public:
                     break;
                 }
                 q_index++;
-
             }
         }  // Scope for disk_file
-
-
         return qualities;
     }
 
@@ -290,9 +279,6 @@ public:
         std::lock_guard<std::mutex> l(_mtx);
         {
             std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-//            if (!disk_file.is_open()) {
-//                disk_file.open(filename, std::ios::in | std::ios::binary);
-//            }
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
@@ -320,7 +306,6 @@ public:
                 full_proof += x;
             }
         }  // Scope for disk_file
-
         return full_proof;
     }
 
@@ -331,9 +316,6 @@ public:
         std::lock_guard<std::mutex> l(_mtx);
         {
 //            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-//            if (!disk_file.is_open()) {
-//                disk_file.open(filename, std::ios::in | std::ios::binary);
-//            }
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
@@ -361,7 +343,6 @@ public:
                 full_proof += x;
             }
         }  // Scope for disk_file
-
         return full_proof;
     }
 
@@ -380,13 +361,12 @@ private:
         disk_file.seekg(seek_location);
 
         if (disk_file.fail()) {
-//            std::cout << "goodbit, failbit, badbit, eofbit: "
-//                      << (disk_file.rdstate() & std::ifstream::goodbit)
-//                      << (disk_file.rdstate() & std::ifstream::failbit)
-//                      << (disk_file.rdstate() & std::ifstream::badbit)
-//                      << (disk_file.rdstate() & std::ifstream::eofbit)
-//                      << std::endl;
-
+            std::cout << "goodbit, failbit, badbit, eofbit: "
+                      << (disk_file.rdstate() & std::ifstream::goodbit)
+                      << (disk_file.rdstate() & std::ifstream::failbit)
+                      << (disk_file.rdstate() & std::ifstream::badbit)
+                      << (disk_file.rdstate() & std::ifstream::eofbit)
+                      << std::endl;
             throw std::runtime_error("badbit or failbit after seeking to " + std::to_string(seek_location));
         }
     }
@@ -396,15 +376,14 @@ private:
         disk_file.read(reinterpret_cast<char*>(target), size);
 
         if (disk_file.fail()) {
-
-//            std::cout << "goodbit, failbit, badbit, eofbit: "
-//                      << (disk_file.rdstate() & std::ifstream::goodbit)
-//                      << (disk_file.rdstate() & std::ifstream::failbit)
-//                      << (disk_file.rdstate() & std::ifstream::badbit)
-//                      << (disk_file.rdstate() & std::ifstream::eofbit)
-//                      << std::endl;
+            std::cout << "goodbit, failbit, badbit, eofbit: "
+                      << (disk_file.rdstate() & std::ifstream::goodbit)
+                      << (disk_file.rdstate() & std::ifstream::failbit)
+                      << (disk_file.rdstate() & std::ifstream::badbit)
+                      << (disk_file.rdstate() & std::ifstream::eofbit)
+                      << std::endl;
             throw std::runtime_error("badbit or failbit after reading size " +
-                    std::to_string(size) + " at position " + std::to_string(pos));
+                                     std::to_string(size) + " at position " + std::to_string(pos));
         }
     }
 

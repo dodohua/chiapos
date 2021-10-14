@@ -194,6 +194,58 @@ public:
         return qualities;
     }
 
+    uint128_t convert_prover_size(uint32_t prover_size){
+        if (prover_size == 32){
+            return uint128_t("16163005183318065870049923064771677303264824900913800816815079249027683652907334704824320");
+        }
+        if (prover_size == 33){
+            return uint128_t("33320656839455705024410610625836996286730562103422297068511086451841686299839736160714752");
+        }
+        if (prover_size == 34){
+            return uint128_t("68630606624550556617442750244261275933862948810033985006784028811256010587729605823561728");
+        }
+
+        if (prover_size == 35){
+            return uint128_t("141239799140379406372128558473697118588529546826446751753091769437657297151559478651387904");
+        }
+        if (prover_size == 36){
+            return uint128_t("290436770063315399018743232917743370618666392065651066985230962505605146255319491311304704");
+        }
+        if (prover_size == 37){
+            return uint128_t("596787883691743970586458697776185008120547380956817260928556772271791396415040050639667200");
+        }
+        if (prover_size == 38){
+            return uint128_t("1225404454513714286270861859433766550007523955564664775773303239064745000638882237313449984");
+        }
+
+        if (prover_size == 39){
+            return uint128_t("2514466283287881262737612646630326167547906298431390059378985867171814416895368746695131136");
+        }
+        if (prover_size == 40){
+            return uint128_t("5156247315096667905867003148786238470161529371466901134422730512428277665025946037526724608");
+        }
+        if (prover_size == 41){
+            return uint128_t("10567124127235146572517562008623649210454492292142044300174978581025852992522309163326373888");
+        }
+        if (prover_size == 42){
+            return uint128_t("21643507248553914666602235439349642961171851682700572663008992274390301309985452503198597120");
+        }
+        if (prover_size == 43){
+            return uint128_t("44305532485275072376338693722903975002869437562234113451336054773457793269852573359488892928");
+        }
+        if (prover_size == 44){
+            return uint128_t("90648100946884630838945833134217328166790343518134163153308249996269967839468483425161183232");
+        }
+        if (prover_size == 45){
+            return uint128_t("185370273846438233850428557645253412655683623823600198807888780891248698278463640262689161216");
+        }
+        if (prover_size == 46){
+            return uint128_t("378888691598214412045930898044144337955573121221864142618322123579914921755980627350111911936");
+        }
+
+        return 0;
+    }
+
     std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_pow_FACTOR,uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
@@ -256,9 +308,9 @@ public:
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
                 picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
                 uint64_t sp_quality_string_init = Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
-                uint128_t factor_pow = 0x80000000000000000ull;
-                uint128_t pp_256 = 0x10000000000000000000000000000000000000000000000000000000000000000ull;
-                uint128_t pp_s = pp_256*((2 * prover_size) + 1) * (uint64_t(pow(2, prover_size-1)));
+                uint128_t factor_pow = uint128_t("147573952589676412928");
+                uint128_t pp_256 = uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
+                uint128_t pp_s = convert_prover_size(prover_size);
 
                 uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){

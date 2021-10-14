@@ -275,6 +275,7 @@ public:
             for (uint64_t position : p7_entries) {
                 // This inner loop goes from table 6 to table 1, getting the two backpointers,
                 // and following one of them.
+                uint64_t org_position = position;
                 for (uint8_t table_index = 6; table_index > 1; table_index--) {
                     uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
 
@@ -314,7 +315,7 @@ public:
                 uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
-                    LargeBits proof = GetFullProof_(disk_file,position,false);
+                    LargeBits proof = GetFullProof_(disk_file,org_position,false);
                     qualities.emplace_back(proof) ;
                     break;
                 }

@@ -149,26 +149,30 @@ PYBIND11_MODULE(chiapos, m)
                 }
 
                 return ret;
-            })
-        .def(
-            "get_full_proof",
-            [](DiskProver &dp, const py::bytes &challenge, uint32_t index, bool parallel_read) {
-                std::string challenge_str(challenge);
-                const uint8_t *challenge_ptr =
-                    reinterpret_cast<const uint8_t *>(challenge_str.data());
-                py::gil_scoped_release release;
-                LargeBits proof = dp.GetFullProof(challenge_ptr, index, parallel_read);
-                py::gil_scoped_acquire acquire;
-                uint8_t *proof_buf = new uint8_t[Util::ByteAlign(64 * dp.GetSize()) / 8];
-                proof.ToBytes(proof_buf);
-                py::bytes ret = py::bytes(
-                    reinterpret_cast<char *>(proof_buf), Util::ByteAlign(64 * dp.GetSize()) / 8);
-                delete[] proof_buf;
-                return ret;
             },
-            py::arg("challenge"),
-            py::arg("index"),
-            py::arg("parallel_read") = true);
+py::arg("challenge"), py::arg("sp_hash"), py::arg("difficulty"), py::arg("prover_size"),
+py::arg("DIFFICULTY_CONSTANT_FACTOR"),
+py::arg("sp_interval_iters"))
+            .def(
+                "get_full_proof",
+                [](DiskProver &dp, const py::bytes &challenge, uint32_t index, bool parallel_read) {
+                    std::string challenge_str(challenge);
+                    const uint8_t *challenge_ptr =
+                        reinterpret_cast<const uint8_t *>(challenge_str.data());
+                    py::gil_scoped_release release;
+                    LargeBits proof = dp.GetFullProof(challenge_ptr, index, parallel_read);
+                    py::gil_scoped_acquire acquire;
+                    uint8_t *proof_buf = new uint8_t[Util::ByteAlign(64 * dp.GetSize()) / 8];
+                    proof.ToBytes(proof_buf);
+                    py::bytes ret = py::bytes(
+                        reinterpret_cast<char *>(proof_buf),
+                        Util::ByteAlign(64 * dp.GetSize()) / 8);
+                    delete[] proof_buf;
+                    return ret;
+                },
+                py::arg("challenge"),
+                py::arg("index"),
+                py::arg("parallel_read") = true);
 
     py::class_<Verifier>(m, "Verifier")
         .def(py::init<>())

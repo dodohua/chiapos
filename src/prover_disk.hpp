@@ -28,6 +28,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <math.h>
 
 #include "../lib/include/picosha2.hpp"
 #include "calculate_bucket.hpp"

@@ -270,7 +270,7 @@ public:
             // The last 5 bits of the challenge determine which route we take to get to
             // our two x values in the leaves.
             uint8_t last_5_bits = challenge[31] & 0x1f;
-            
+
 
             for (uint64_t position : p7_entries) {
                 // This inner loop goes from table 6 to table 1, getting the two backpointers,
@@ -321,7 +321,7 @@ public:
 
             }
         }  // Scope for disk_file
-        disk_file.close();
+
         return qualities;
     }
 

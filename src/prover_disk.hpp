@@ -270,8 +270,7 @@ public:
             // The last 5 bits of the challenge determine which route we take to get to
             // our two x values in the leaves.
             uint8_t last_5_bits = challenge[31] & 0x1f;
-
-            uint32_t q_index = 0;
+            
 
             for (uint64_t position : p7_entries) {
                 // This inner loop goes from table 6 to table 1, getting the two backpointers,
@@ -309,19 +308,20 @@ public:
                 picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
                 uint64_t sp_quality_string_init = Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
                 uint128_t factor_pow = uint128_t("147573952589676412928");
-                uint128_t pp_256 = uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
+//                uint128_t pp_256 = uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
                 uint128_t pp_s = convert_prover_size(prover_size);
 
                 uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
-                    LargeBits proof = GetFullProof_(disk_file,challenge,q_index,false);
+                    LargeBits proof = GetFullProof_(disk_file,position,false);
                     qualities.emplace_back(proof) ;
                     break;
                 }
-                q_index++;
+
             }
         }  // Scope for disk_file
+        disk_file.close();
         return qualities;
     }
 
@@ -365,7 +365,7 @@ public:
         return full_proof;
     }
 
-    LargeBits GetFullProof_(std::ifstream& disk_file,const uint8_t* challenge, uint32_t index, bool parallel_read = true)
+    LargeBits GetFullProof_(std::ifstream& disk_file, uint64_t position, bool parallel_read = true)
     {
         LargeBits full_proof;
 
@@ -377,17 +377,17 @@ public:
                 throw std::invalid_argument("Invalid file " + filename);
             }
 
-            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-            if (p7_entries.empty() || index >= p7_entries.size()) {
-                throw std::logic_error("No proof of space for this challenge");
-            }
+//            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
+//            if (p7_entries.empty() || index >= p7_entries.size()) {
+//                throw std::logic_error("No proof of space for this challenge");
+//            }
 
             // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
             std::vector<Bits> xs;
             if (parallel_read) {
-                xs = GetInputs(p7_entries[index], 6);
+                xs = GetInputs(position, 6);
             } else {
-                xs = GetInputs(p7_entries[index], 6, &disk_file); // Passing in a disk_file disabled the parallel reads
+                xs = GetInputs(position, 6, &disk_file); // Passing in a disk_file disabled the parallel reads
             }
 
             // Sorts them according to proof ordering, where

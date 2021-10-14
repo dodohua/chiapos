@@ -134,7 +134,7 @@ PYBIND11_MODULE(chiapos, m)
                     sp_hash_ptr,
                     difficulty,
                     prover_size,
-                    DIFFICULTY_CONSTANT_FACTOR,
+                    DIFFICULTY_pow_FACTOR,
                     sp_interval_iters);
                 py::gil_scoped_acquire acquire;
                 std::vector<py::bytes> ret;

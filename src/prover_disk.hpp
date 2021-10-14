@@ -135,15 +135,7 @@ public:
 
     uint8_t GetSize() const noexcept { return k; }
 
-    uint8_t CloseGFile() {
-        if (disk_file.fail()) {
-            return 0;
-        }
-        disk_file.clear();
-        disk_file.sync();
-        disk_file.close();
-        return 0;
-    }
+
 
     // Given a challenge, returns a quality string, which is sha256(challenge + 2 adjecent x
     // values), from the 64 value proof. Note that this is more efficient than fetching all 64 x

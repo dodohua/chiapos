@@ -90,7 +90,6 @@ PYBIND11_MODULE(chiapos, m)
                 return py::bytes(reinterpret_cast<const char*>(id.data()), id.size());
             })
         .def("get_size", [](DiskProver &dp) { return dp.GetSize(); })
-        .def("close_GFile", [](DiskProver &dp) { return dp.CloseGFile(); })
         .def("get_filename", [](DiskProver &dp) { return dp.GetFilename(); })
         .def(
             "get_qualities_for_challenge",
@@ -142,13 +141,7 @@ PYBIND11_MODULE(chiapos, m)
                 }
 
                 return ret;
-            },
-            py::arg("challenge"),
-            py::arg("sp_hash"),
-            py::arg("difficulty"),
-            py::arg("prover_size"),
-            py::arg("DIFFICULTY_CONSTANT_FACTOR"),
-            py::arg("sp_interval_iters"))
+            })
         .def("get_full_proof", [](DiskProver &dp, const py::bytes &challenge, uint32_t index, bool parallel_read) {
             std::string challenge_str(challenge);
             const uint8_t *challenge_ptr = reinterpret_cast<const uint8_t *>(challenge_str.data());

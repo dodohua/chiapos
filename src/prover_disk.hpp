@@ -265,7 +265,8 @@ public:
                 uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
-                    qualities.emplace_back(GetFullProof_(&disk_file,challenge,q_index,false)) ;
+                    LargeBits proof = GetFullProof_(&disk_file,challenge,q_index,false);
+                    qualities.emplace_back(proof) ;
                     break;
                 }
                 q_index++;

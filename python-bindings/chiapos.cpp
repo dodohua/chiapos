@@ -121,7 +121,7 @@ PYBIND11_MODULE(chiapos, m)
                const py::bytes &sp_hash,
                uint32_t difficulty,
                uint32_t prover_size,
-               uint64_t DIFFICULTY_CONSTANT_FACTOR,
+               uint128_t DIFFICULTY_CONSTANT_FACTOR,
                uint64_t sp_interval_iters) {
                 std::string challenge_str(challenge);
                 const uint8_t *challenge_ptr =

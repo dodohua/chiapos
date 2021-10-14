@@ -351,7 +351,7 @@ public:
                 //                uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
                 uint128_t pp_s = convert_prover_size(prover_size);
 
-                double iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
+                uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
 
                 std::cout << "factor_pow:" << factor_pow
                           << "sp_quality_string: " << sp_quality_string_init << "sp_quality_string low: " << (uint64_t)sp_quality_string_init

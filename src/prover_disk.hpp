@@ -18,6 +18,7 @@
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+#include <math.h>
 #include <stdio.h>
 
 #include <algorithm>  // std::min
@@ -28,7 +29,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <math.h>
 
 #include "../lib/include/picosha2.hpp"
 #include "calculate_bucket.hpp"
@@ -44,7 +44,6 @@ struct plot_header {
     uint8_t fmt_desc[50];
 };
 
-
 // The DiskProver, given a correctly formatted plot file, can efficiently generate valid proofs
 // of space, for a given challenge.
 class DiskProver {
@@ -53,7 +52,8 @@ public:
     // will be used to find and seek to all seven tables, at the time of proving.
     explicit DiskProver(const std::string& filename) : id(kIdLen)
     {
-        struct plot_header header{};
+        struct plot_header header {
+        };
         this->filename = filename;
 
         std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
@@ -194,59 +194,96 @@ public:
         return qualities;
     }
 
-    uint128_t convert_prover_size(uint32_t prover_size){
-        if (prover_size == 32){
-            return uint128_t("16163005183318065870049923064771677303264824900913800816815079249027683652907334704824320");
+    uint128_t convert_prover_size(uint32_t prover_size)
+    {
+        if (prover_size == 32) {
+            return uint128_t(
+                "1616300518331806587004992306477167730326482490091380081681507924902768365290733470"
+                "4824320");
         }
-        if (prover_size == 33){
-            return uint128_t("33320656839455705024410610625836996286730562103422297068511086451841686299839736160714752");
+        if (prover_size == 33) {
+            return uint128_t(
+                "3332065683945570502441061062583699628673056210342229706851108645184168629983973616"
+                "0714752");
         }
-        if (prover_size == 34){
-            return uint128_t("68630606624550556617442750244261275933862948810033985006784028811256010587729605823561728");
-        }
-
-        if (prover_size == 35){
-            return uint128_t("141239799140379406372128558473697118588529546826446751753091769437657297151559478651387904");
-        }
-        if (prover_size == 36){
-            return uint128_t("290436770063315399018743232917743370618666392065651066985230962505605146255319491311304704");
-        }
-        if (prover_size == 37){
-            return uint128_t("596787883691743970586458697776185008120547380956817260928556772271791396415040050639667200");
-        }
-        if (prover_size == 38){
-            return uint128_t("1225404454513714286270861859433766550007523955564664775773303239064745000638882237313449984");
+        if (prover_size == 34) {
+            return uint128_t(
+                "6863060662455055661744275024426127593386294881003398500678402881125601058772960582"
+                "3561728");
         }
 
-        if (prover_size == 39){
-            return uint128_t("2514466283287881262737612646630326167547906298431390059378985867171814416895368746695131136");
+        if (prover_size == 35) {
+            return uint128_t(
+                "1412397991403794063721285584736971185885295468264467517530917694376572971515594786"
+                "51387904");
         }
-        if (prover_size == 40){
-            return uint128_t("5156247315096667905867003148786238470161529371466901134422730512428277665025946037526724608");
+        if (prover_size == 36) {
+            return uint128_t(
+                "2904367700633153990187432329177433706186663920656510669852309625056051462553194913"
+                "11304704");
         }
-        if (prover_size == 41){
-            return uint128_t("10567124127235146572517562008623649210454492292142044300174978581025852992522309163326373888");
+        if (prover_size == 37) {
+            return uint128_t(
+                "5967878836917439705864586977761850081205473809568172609285567722717913964150400506"
+                "39667200");
         }
-        if (prover_size == 42){
-            return uint128_t("21643507248553914666602235439349642961171851682700572663008992274390301309985452503198597120");
+        if (prover_size == 38) {
+            return uint128_t(
+                "1225404454513714286270861859433766550007523955564664775773303239064745000638882237"
+                "313449984");
         }
-        if (prover_size == 43){
-            return uint128_t("44305532485275072376338693722903975002869437562234113451336054773457793269852573359488892928");
+
+        if (prover_size == 39) {
+            return uint128_t(
+                "2514466283287881262737612646630326167547906298431390059378985867171814416895368746"
+                "695131136");
         }
-        if (prover_size == 44){
-            return uint128_t("90648100946884630838945833134217328166790343518134163153308249996269967839468483425161183232");
+        if (prover_size == 40) {
+            return uint128_t(
+                "5156247315096667905867003148786238470161529371466901134422730512428277665025946037"
+                "526724608");
         }
-        if (prover_size == 45){
-            return uint128_t("185370273846438233850428557645253412655683623823600198807888780891248698278463640262689161216");
+        if (prover_size == 41) {
+            return uint128_t(
+                "1056712412723514657251756200862364921045449229214204430017497858102585299252230916"
+                "3326373888");
         }
-        if (prover_size == 46){
-            return uint128_t("378888691598214412045930898044144337955573121221864142618322123579914921755980627350111911936");
+        if (prover_size == 42) {
+            return uint128_t(
+                "2164350724855391466660223543934964296117185168270057266300899227439030130998545250"
+                "3198597120");
+        }
+        if (prover_size == 43) {
+            return uint128_t(
+                "4430553248527507237633869372290397500286943756223411345133605477345779326985257335"
+                "9488892928");
+        }
+        if (prover_size == 44) {
+            return uint128_t(
+                "9064810094688463083894583313421732816679034351813416315330824999626996783946848342"
+                "5161183232");
+        }
+        if (prover_size == 45) {
+            return uint128_t(
+                "1853702738464382338504285576452534126556836238236001988078887808912486982784636402"
+                "62689161216");
+        }
+        if (prover_size == 46) {
+            return uint128_t(
+                "3788886915982144120459308980441443379555731212218641426183221235799149217559806273"
+                "50111911936");
         }
 
         return 0;
     }
 
-    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_pow_FACTOR,uint64_t sp_interval_iters)
+    std::vector<LargeBits> GetQualitiesForChallenge_proof(
+        const uint8_t* challenge,
+        const uint8_t* sp_hash,
+        uint32_t difficulty,
+        uint32_t prover_size,
+        uint64_t DIFFICULTY_pow_FACTOR,
+        uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
 
@@ -270,7 +307,6 @@ public:
             // The last 5 bits of the challenge determine which route we take to get to
             // our two x values in the leaves.
             uint8_t last_5_bits = challenge[31] & 0x1f;
-
 
             for (uint64_t position : p7_entries) {
                 // This inner loop goes from table 6 to table 1, getting the two backpointers,
@@ -298,28 +334,35 @@ public:
                     .ToBytes(hash_input.data() + 32);
                 std::vector<unsigned char> hash(picosha2::k_digest_size);
                 picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
-//                qualities.emplace_back(hash.data(), 32, 256);
+                //                qualities.emplace_back(hash.data(), 32, 256);
                 LargeBits quality = LargeBits(hash.data(), 32, 256);
-                uint8_t *quality_buf = new uint8_t[32];
+                uint8_t* quality_buf = new uint8_t[32];
                 quality.ToBytes(quality_buf);
                 std::vector<unsigned char> hash_input_c(32 + 32, 0);
                 memcpy(hash_input_c.data(), quality_buf, 32);
-                memcpy(hash_input_c.data()+32, sp_hash, 32);
+                memcpy(hash_input_c.data() + 32, sp_hash, 32);
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
-                picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
-                uint64_t sp_quality_string_init = Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
+                picosha2::hash256(
+                    hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
+                uint64_t sp_quality_string_init =
+                    Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
                 uint128_t factor_pow = uint128_t("147573952589676412928");
-//                uint128_t pp_256 = uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
+                //                uint128_t pp_256 =
+                //                uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
                 uint128_t pp_s = convert_prover_size(prover_size);
 
                 uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
-                if (iters < sp_interval_iters){
-                    //find proof
-                    LargeBits proof = GetFullProof_(disk_file,org_position,false);
-                    qualities.emplace_back(proof) ;
+
+                std::cout << "factor_pow： " << factor_pow << "sp_quality_string"
+                          << sp_quality_string_init << "plot_size_c： " << pp_s << "iters： "
+                          << iters << std::endl;
+
+                if (iters < sp_interval_iters) {
+                    // find proof
+                    LargeBits proof = GetFullProof_(disk_file, org_position, false);
+                    qualities.emplace_back(proof);
                     break;
                 }
-
             }
         }  // Scope for disk_file
 
@@ -351,7 +394,10 @@ public:
             if (parallel_read) {
                 xs = GetInputs(p7_entries[index], 6);
             } else {
-                xs = GetInputs(p7_entries[index], 6, &disk_file); // Passing in a disk_file disabled the parallel reads
+                xs = GetInputs(
+                    p7_entries[index],
+                    6,
+                    &disk_file);  // Passing in a disk_file disabled the parallel reads
             }
 
             // Sorts them according to proof ordering, where
@@ -374,17 +420,18 @@ public:
             throw std::invalid_argument("Invalid file " + filename);
         }
 
-//            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-//            if (p7_entries.empty() || index >= p7_entries.size()) {
-//                throw std::logic_error("No proof of space for this challenge");
-//            }
+        //            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
+        //            if (p7_entries.empty() || index >= p7_entries.size()) {
+        //                throw std::logic_error("No proof of space for this challenge");
+        //            }
 
         // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
         std::vector<Bits> xs;
         if (parallel_read) {
             xs = GetInputs(position, 6);
         } else {
-            xs = GetInputs(position, 6, &disk_file); // Passing in a disk_file disabled the parallel reads
+            xs = GetInputs(
+                position, 6, &disk_file);  // Passing in a disk_file disabled the parallel reads
         }
 
         // Sorts them according to proof ordering, where
@@ -396,12 +443,12 @@ public:
             full_proof += x;
         }
 
-//        std::lock_guard<std::mutex> l(_mtx);
-//        {
-////            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-//
-//
-//        }  // Scope for disk_file
+        //        std::lock_guard<std::mutex> l(_mtx);
+        //        {
+        ////            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+        //
+        //
+        //        }  // Scope for disk_file
         return full_proof;
     }
 
@@ -416,7 +463,8 @@ private:
 
     // Using this method instead of simply seeking will prevent segfaults that would arise when
     // continuing the process of looking up qualities.
-    static void SafeSeek(std::ifstream& disk_file, uint64_t seek_location) {
+    static void SafeSeek(std::ifstream& disk_file, uint64_t seek_location)
+    {
         disk_file.seekg(seek_location);
 
         if (disk_file.fail()) {
@@ -424,13 +472,14 @@ private:
                       << (disk_file.rdstate() & std::ifstream::goodbit)
                       << (disk_file.rdstate() & std::ifstream::failbit)
                       << (disk_file.rdstate() & std::ifstream::badbit)
-                      << (disk_file.rdstate() & std::ifstream::eofbit)
-                      << std::endl;
-            throw std::runtime_error("badbit or failbit after seeking to " + std::to_string(seek_location));
+                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
+            throw std::runtime_error(
+                "badbit or failbit after seeking to " + std::to_string(seek_location));
         }
     }
 
-    static void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size) {
+    static void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size)
+    {
         int64_t pos = disk_file.tellg();
         disk_file.read(reinterpret_cast<char*>(target), size);
 
@@ -439,10 +488,10 @@ private:
                       << (disk_file.rdstate() & std::ifstream::goodbit)
                       << (disk_file.rdstate() & std::ifstream::failbit)
                       << (disk_file.rdstate() & std::ifstream::badbit)
-                      << (disk_file.rdstate() & std::ifstream::eofbit)
-                      << std::endl;
-            throw std::runtime_error("badbit or failbit after reading size " +
-                                     std::to_string(size) + " at position " + std::to_string(pos));
+                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
+            throw std::runtime_error(
+                "badbit or failbit after reading size " + std::to_string(size) + " at position " +
+                std::to_string(pos));
         }
     }
 
@@ -477,7 +526,8 @@ private:
         SafeRead(disk_file, (uint8_t*)&encoded_deltas_size, sizeof(uint16_t));
 
         if (encoded_deltas_size * 8 > max_deltas_size_bits) {
-            throw std::invalid_argument("Invalid size for deltas: " + std::to_string(encoded_deltas_size));
+            throw std::invalid_argument(
+                "Invalid size for deltas: " + std::to_string(encoded_deltas_size));
         }
 
         std::vector<uint8_t> deltas;
@@ -806,7 +856,10 @@ private:
     // all of the leaves (x values). For example, for depth=5, it fetches the position-th
     // entry in table 5, reading the two back pointers from the line point, and then
     // recursively calling GetInputs for table 4.
-    std::vector<Bits> GetInputs(uint64_t position, uint8_t depth, std::ifstream* disk_file = nullptr)
+    std::vector<Bits> GetInputs(
+        uint64_t position,
+        uint8_t depth,
+        std::ifstream* disk_file = nullptr)
     {
         uint128_t line_point;
 
@@ -830,19 +883,30 @@ private:
             std::vector<Bits> left, right;
             if (!disk_file) {
                 // no disk_file, so we do parallel reads here
-                auto left_fut=std::async(std::launch::async, &DiskProver::GetInputs,this, (uint64_t)xy.second, (uint8_t)(depth - 1), nullptr);
-                auto right_fut=std::async(std::launch::async, &DiskProver::GetInputs,this, (uint64_t)xy.first, (uint8_t)(depth - 1), nullptr);
-                left = left_fut.get();  // y
+                auto left_fut = std::async(
+                    std::launch::async,
+                    &DiskProver::GetInputs,
+                    this,
+                    (uint64_t)xy.second,
+                    (uint8_t)(depth - 1),
+                    nullptr);
+                auto right_fut = std::async(
+                    std::launch::async,
+                    &DiskProver::GetInputs,
+                    this,
+                    (uint64_t)xy.first,
+                    (uint8_t)(depth - 1),
+                    nullptr);
+                left = left_fut.get();    // y
                 right = right_fut.get();  // x
             } else {
                 left = GetInputs(xy.second, depth - 1, disk_file);  // y
-                right = GetInputs(xy.first, depth - 1, disk_file);  // x  
+                right = GetInputs(xy.first, depth - 1, disk_file);  // x
             }
             left.insert(left.end(), right.begin(), right.end());
             return left;
         }
     }
-
 };
 
 #endif  // SRC_CPP_PROVER_DISK_HPP_

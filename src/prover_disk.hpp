@@ -159,8 +159,6 @@ public:
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
             if (p7_entries.empty()) {
-                disk_file.clear();
-                disk_file.sync();
                 return std::vector<LargeBits>();
             }
 
@@ -196,8 +194,7 @@ public:
                 qualities.emplace_back(hash.data(), 32, 256);
             }
         }  // Scope for disk_file
-        disk_file.clear();
-//        disk_file.sync();
+
         return qualities;
     }
 
@@ -268,15 +265,14 @@ public:
                 uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
-                    qualities.emplace_back(GetFullProof(challenge,q_index,false)) ;
+                    qualities.emplace_back(GetFullProof_(&disk_file,challenge,q_index,false)) ;
                     break;
                 }
                 q_index++;
 
             }
         }  // Scope for disk_file
-//        disk_file.clear();
-//        disk_file.sync();
+
 
         return qualities;
     }
@@ -301,8 +297,6 @@ public:
 
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
             if (p7_entries.empty() || index >= p7_entries.size()) {
-                disk_file.clear();
-                disk_file.sync();
                 throw std::logic_error("No proof of space for this challenge");
             }
 
@@ -323,8 +317,48 @@ public:
                 full_proof += x;
             }
         }  // Scope for disk_file
-        disk_file.clear();
-        disk_file.sync();
+
+        return full_proof;
+    }
+
+    LargeBits GetFullProof_(std::ifstream& disk_file,const uint8_t* challenge, uint32_t index, bool parallel_read = true)
+    {
+        LargeBits full_proof;
+
+        std::lock_guard<std::mutex> l(_mtx);
+        {
+//            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+//            if (!disk_file.is_open()) {
+//                disk_file.open(filename, std::ios::in | std::ios::binary);
+//            }
+
+            if (!disk_file.is_open()) {
+                throw std::invalid_argument("Invalid file " + filename);
+            }
+
+            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
+            if (p7_entries.empty() || index >= p7_entries.size()) {
+                throw std::logic_error("No proof of space for this challenge");
+            }
+
+            // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
+            std::vector<Bits> xs;
+            if (parallel_read) {
+                xs = GetInputs(p7_entries[index], 6);
+            } else {
+                xs = GetInputs(p7_entries[index], 6, &disk_file); // Passing in a disk_file disabled the parallel reads
+            }
+
+            // Sorts them according to proof ordering, where
+            // f1(x0) m= f1(x1), f2(x0, x1) m= f2(x2, x3), etc. On disk, they are not stored in
+            // proof ordering, they're stored in plot ordering, due to the sorting in the Compress
+            // phase.
+            std::vector<LargeBits> xs_sorted = ReorderProof(xs);
+            for (const auto& x : xs_sorted) {
+                full_proof += x;
+            }
+        }  // Scope for disk_file
+
         return full_proof;
     }
 

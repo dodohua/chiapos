@@ -193,7 +193,7 @@ public:
         return qualities;
     }
 
-    std::vector<LargeBits> GetQualitiesForChallenge(const uint8_t* challenge)
+    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
 

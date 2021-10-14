@@ -128,7 +128,7 @@ PYBIND11_MODULE(chiapos, m)
                     reinterpret_cast<const uint8_t *>(challenge_str.data());
                 py::gil_scoped_release release;
                 std::vector<LargeBits> qualities =
-                    dp.GetQualitiesForChallenge_proof(challenge_ptr, index, parallel_read);
+                    dp.GetQualitiesForChallenge_proof(challenge_ptr,sp_hash, difficulty, prover_size,DIFFICULTY_CONSTANT_FACTOR,sp_interval_iters);
                 py::gil_scoped_acquire acquire;
                 std::vector<py::bytes> ret;
                 for (LargeBits proof : qualities) {

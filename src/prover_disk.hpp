@@ -369,36 +369,38 @@ public:
     {
         LargeBits full_proof;
 
-        std::lock_guard<std::mutex> l(_mtx);
-        {
-//            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-
-            if (!disk_file.is_open()) {
-                throw std::invalid_argument("Invalid file " + filename);
-            }
+        if (!disk_file.is_open()) {
+            throw std::invalid_argument("Invalid file " + filename);
+        }
 
 //            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 //            if (p7_entries.empty() || index >= p7_entries.size()) {
 //                throw std::logic_error("No proof of space for this challenge");
 //            }
 
-            // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
-            std::vector<Bits> xs;
-            if (parallel_read) {
-                xs = GetInputs(position, 6);
-            } else {
-                xs = GetInputs(position, 6, &disk_file); // Passing in a disk_file disabled the parallel reads
-            }
+        // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
+        std::vector<Bits> xs;
+        if (parallel_read) {
+            xs = GetInputs(position, 6);
+        } else {
+            xs = GetInputs(position, 6, &disk_file); // Passing in a disk_file disabled the parallel reads
+        }
 
-            // Sorts them according to proof ordering, where
-            // f1(x0) m= f1(x1), f2(x0, x1) m= f2(x2, x3), etc. On disk, they are not stored in
-            // proof ordering, they're stored in plot ordering, due to the sorting in the Compress
-            // phase.
-            std::vector<LargeBits> xs_sorted = ReorderProof(xs);
-            for (const auto& x : xs_sorted) {
-                full_proof += x;
-            }
-        }  // Scope for disk_file
+        // Sorts them according to proof ordering, where
+        // f1(x0) m= f1(x1), f2(x0, x1) m= f2(x2, x3), etc. On disk, they are not stored in
+        // proof ordering, they're stored in plot ordering, due to the sorting in the Compress
+        // phase.
+        std::vector<LargeBits> xs_sorted = ReorderProof(xs);
+        for (const auto& x : xs_sorted) {
+            full_proof += x;
+        }
+
+//        std::lock_guard<std::mutex> l(_mtx);
+//        {
+////            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+//
+//
+//        }  // Scope for disk_file
         return full_proof;
     }
 

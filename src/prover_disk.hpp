@@ -194,7 +194,7 @@ public:
         return qualities;
     }
 
-    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint128_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
+    std::vector<LargeBits> GetQualitiesForChallenge_proof(const uint8_t* challenge,const uint8_t* sp_hash,uint32_t difficulty,uint32_t prover_size,uint64_t DIFFICULTY_CONSTANT_FACTOR,uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
 
@@ -255,9 +255,11 @@ public:
                 memcpy(hash_input_c.data()+32, sp_hash, 32);
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
                 picosha2::hash256(hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
-                uint64_t sp_quality_string_init = Util::EightBytesToInt(hash_c.data());
-                uint128_t pp_s = int(pow(2, 256))*((2 * prover_size) + 1) * (int(pow(2, prover_size-1)));
-                uint64_t iters = (difficulty * DIFFICULTY_CONSTANT_FACTOR * sp_quality_string_init) / pp_s;
+                uint64_t sp_quality_string_init = Util::SliceInt64FromBytesFull(hash_c.data(), 0, 32);
+                uint128_t pp_256 = 115792089237316195423570985008687907853269984665640564039457584007913129639936
+                uint128_t pp_s = pp_256*((2 * prover_size) + 1) * (long(pow(2, prover_size-1)));
+                uint128_t factor_pow = 147573952589676412928
+                uint64_t iters = (difficulty * factor_pow * sp_quality_string_init) / pp_s;
                 if (iters < sp_interval_iters){
                     //find proof
                     LargeBits proof = GetFullProof_(disk_file,challenge,q_index,false);

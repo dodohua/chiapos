@@ -317,7 +317,7 @@ public:
                 LargeBits hash_bits = LargeBits(hash_c.data(), 32, 256);
                 uint8_t* hash_bits_buf = new uint8_t[32];
                 hash_bits.ToBytes(hash_bits_buf);
-                string hex_sp_quality_string("0x");
+                std::string hex_sp_quality_string("0x");
                 hex_sp_quality_string.append(Util::HexStr(hash_bits_buf, 16));
                 uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
                 uint128_t factor_pow = uint128_t("147573952589676412928");

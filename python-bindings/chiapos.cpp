@@ -122,13 +122,16 @@ PYBIND11_MODULE(chiapos, m)
                uint32_t difficulty,
                uint32_t prover_size,
                uint64_t DIFFICULTY_pow_FACTOR,
-               uint64_t sp_interval_iters) {
+               uint64_t sp_interval_iters,bool test_proof) {
                 std::string challenge_str(challenge);
                 const uint8_t *challenge_ptr =
                     reinterpret_cast<const uint8_t *>(challenge_str.data());
                 std::string sp_hash_str(sp_hash);
                 const uint8_t *sp_hash_ptr = reinterpret_cast<const uint8_t *>(sp_hash_str.data());
                 py::gil_scoped_release release;
+                if (test_proof){
+                    sp_interval_iters = sp_interval_iters *50000000
+                }
                 std::vector<LargeBits> qualities = dp.GetQualitiesForChallenge_proof(
                     challenge_ptr,
                     sp_hash_ptr,

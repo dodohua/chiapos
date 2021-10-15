@@ -130,7 +130,7 @@ PYBIND11_MODULE(chiapos, m)
                 const uint8_t *sp_hash_ptr = reinterpret_cast<const uint8_t *>(sp_hash_str.data());
                 py::gil_scoped_release release;
                 if (test_proof){
-                    sp_interval_iters = sp_interval_iters *50000000
+                    sp_interval_iters = sp_interval_iters *50000000;
                 }
                 std::vector<LargeBits> qualities = dp.GetQualitiesForChallenge_proof(
                     challenge_ptr,

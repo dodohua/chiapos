@@ -326,11 +326,11 @@ public:
 
                 uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
 
-                std::cout << "diffdifficulty_c:" << diffdifficulty_c
-                          << "sp_quality_string_init_c:" << sp_quality_string_init_c
-                          << "hash_c.data():" << Util::HexStr(hash_c.data(), 32)
-                          << "iters:"
-                          << iters << std::endl;
+//                std::cout << "diffdifficulty_c:" << diffdifficulty_c
+//                          << "sp_quality_string_init_c:" << sp_quality_string_init_c
+//                          << "hash_c.data():" << Util::HexStr(hash_c.data(), 32)
+//                          << "iters:"
+//                          << iters << std::endl;
 
                 if (iters < sp_interval_iters) {
                     // find proof
@@ -418,12 +418,7 @@ public:
             full_proof += x;
         }
 
-        //        std::lock_guard<std::mutex> l(_mtx);
-        //        {
-        ////            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-        //
-        //
-        //        }  // Scope for disk_file
+
         return full_proof;
     }
 

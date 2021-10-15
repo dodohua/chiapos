@@ -149,10 +149,7 @@ PYBIND11_MODULE(chiapos, m)
                 }
 
                 return ret;
-            },
-py::arg("challenge"), py::arg("sp_hash"), py::arg("difficulty"), py::arg("prover_size"),
-py::arg("DIFFICULTY_pow_FACTOR"),
-py::arg("sp_interval_iters"))
+            })
             .def(
                 "get_full_proof",
                 [](DiskProver &dp, const py::bytes &challenge, uint32_t index, bool parallel_read) {

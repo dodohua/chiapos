@@ -314,15 +314,11 @@ public:
                 std::vector<unsigned char> hash_c(picosha2::k_digest_size);
                 picosha2::hash256(
                     hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
-                LargeBits hash_bits = LargeBits(hash_c.data(), 32, 256);
-                uint8_t* hash_bits_buf = new uint8_t[32];
-                hash_bits.ToBytes(hash_bits_buf);
+
                 std::string hex_sp_quality_string("0x");
-                hex_sp_quality_string.append(Util::HexStr(hash_bits_buf, 16));
+                hex_sp_quality_string.append(Util::HexStr(hash_c.data(), 16));
                 uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
-                uint128_t factor_pow = uint128_t("147573952589676412928");
-                //                uint128_t pp_256 =
-                //                uint128_t("115792089237316195423570985008687907853269984665640564039457584007913129639936");
+
                 uint128_t pp_s = convert_prover_size(prover_size);
 
                 double diffdifficulty_c = (double)difficulty /65536;
@@ -330,13 +326,9 @@ public:
 
                 uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
 
-                std::cout << "factor_pow:" << factor_pow
-                          << "diffdifficulty_c:" << diffdifficulty_c
+                std::cout << "diffdifficulty_c:" << diffdifficulty_c
                           << "sp_quality_string_init_c:" << sp_quality_string_init_c
-                          << "sp_quality_string HexStr:" << Util::HexStr(hash_bits_buf, 32)
-                          << "hash_c.data()" << Util::HexStr(hash_c.data(), 32)
-                          << "sp_quality_string: " << sp_quality_string_init << "sp_quality_string low: " << (uint64_t)sp_quality_string_init
-                          << "plot_size_c: " << pp_s << "plot_size_c low: " << (uint64_t)pp_s
+                          << "hash_c.data():" << Util::HexStr(hash_c.data(), 32)
                           << "iters:"
                           << iters << std::endl;
 

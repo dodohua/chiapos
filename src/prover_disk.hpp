@@ -363,6 +363,7 @@ public:
         // The last 5 bits of the challenge determine which route we take to get to
         // our two x values in the leaves.
         uint8_t last_5_bits = challenge[31] & 0x1f;
+        int q_index = 0;
 
         for (uint64_t position : p7_entries) {
             // This inner loop goes from table 6 to table 1, getting the two backpointers,
@@ -419,13 +420,14 @@ public:
 //                          << iters << std::endl;
 
             if (iters < sp_interval_iters) {
-                return org_position;
+                return q_index;
                 // find proof
 //                LargeBits proof = GetFullProof_(disk_file, org_position, false);
 //                qualities.emplace_back(proof);
 //                break;
 
             }
+            q_index++;
         }
 
         return -1;

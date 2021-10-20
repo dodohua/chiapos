@@ -153,6 +153,33 @@ PYBIND11_MODULE(chiapos, m)
 
                 return ret;
             })
+.def(
+"GetQualitiesForChallenge_seek",
+[](DiskProver &dp,
+const py::bytes &challenge,
+const py::bytes &sp_hash,
+        uint32_t difficulty,
+uint32_t prover_size,
+        uint64_t DIFFICULTY_pow_FACTOR,
+uint64_t sp_interval_iters,bool test_proof) {
+std::string challenge_str(challenge);
+const uint8_t *challenge_ptr =
+        reinterpret_cast<const uint8_t *>(challenge_str.data());
+std::string sp_hash_str(sp_hash);
+const uint8_t *sp_hash_ptr = reinterpret_cast<const uint8_t *>(sp_hash_str.data());
+py::gil_scoped_release release;
+if (test_proof){
+sp_interval_iters = sp_interval_iters *50000000;
+}
+int ret = dp.GetQualitiesForChallenge_seek(
+        challenge_ptr,
+        sp_hash_ptr,
+        difficulty,
+        prover_size,
+        DIFFICULTY_pow_FACTOR,
+        sp_interval_iters);
+return ret;
+})
             .def(
                 "get_full_proof",
                 [](DiskProver &dp, const py::bytes &challenge, uint32_t index, bool parallel_read) {

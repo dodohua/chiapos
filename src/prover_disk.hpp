@@ -268,7 +268,7 @@ public:
         std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
         if (p7_entries.empty()) {
-            return std::vector<LargeBits>();
+            return -1;
         }
 
         // The last 5 bits of the challenge determine which route we take to get to

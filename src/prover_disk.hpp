@@ -523,7 +523,7 @@ private:
 
     // Using this method instead of simply seeking will prevent segfaults that would arise when
     // continuing the process of looking up qualities.
-    static void SafeSeek(std::ifstream& disk_file, uint64_t seek_location)
+    void SafeSeek(std::ifstream& disk_file, uint64_t seek_location)
     {
         disk_file.seekg(seek_location);
 
@@ -538,7 +538,7 @@ private:
         }
     }
 
-    static void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size)
+    void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size)
     {
         int64_t pos = disk_file.tellg();
         disk_file.read(reinterpret_cast<char*>(target), size);

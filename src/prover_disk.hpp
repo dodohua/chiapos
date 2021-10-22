@@ -61,6 +61,8 @@ public:
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
+        disk_file.clear();
+        disk_file.seekg(0, std::ios::beg);
         // 19 bytes  - "Proof of Space Plot" (utf-8)
         // 32 bytes  - unique plot id
         // 1 byte    - k

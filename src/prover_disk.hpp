@@ -149,6 +149,7 @@ public:
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
+        disk_file.clear();
 
         // This tells us how many f7 outputs (and therefore proofs) we have for this
         // challenge. The expected value is one proof.
@@ -260,6 +261,7 @@ public:
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
+        disk_file.clear();
 
         // This tells us how many f7 outputs (and therefore proofs) we have for this
         // challenge. The expected value is one proof.
@@ -353,6 +355,7 @@ public:
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
+        disk_file.clear();
 
         // This tells us how many f7 outputs (and therefore proofs) we have for this
         // challenge. The expected value is one proof.
@@ -447,6 +450,7 @@ public:
 //
 //        }  // Scope for disk_file
         std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+        disk_file.clear();
 
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);

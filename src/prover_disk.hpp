@@ -143,53 +143,58 @@ public:
     std::vector<LargeBits> GetQualitiesForChallenge(const uint8_t* challenge)
     {
         std::vector<LargeBits> qualities;
+        std::lock_guard<std::mutex> l(_mtx);
+        {
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
 
-        std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-
-        if (!disk_file.is_open()) {
-            throw std::invalid_argument("Invalid file " + filename);
-        }
-        disk_file.clear();
-
-        // This tells us how many f7 outputs (and therefore proofs) we have for this
-        // challenge. The expected value is one proof.
-        std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-
-        if (p7_entries.empty()) {
-            return std::vector<LargeBits>();
-        }
-
-        // The last 5 bits of the challenge determine which route we take to get to
-        // our two x values in the leaves.
-        uint8_t last_5_bits = challenge[31] & 0x1f;
-
-        for (uint64_t position : p7_entries) {
-            // This inner loop goes from table 6 to table 1, getting the two backpointers,
-            // and following one of them.
-            for (uint8_t table_index = 6; table_index > 1; table_index--) {
-                uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
-
-                auto xy = Encoding::LinePointToSquare(line_point);
-                assert(xy.first >= xy.second);
-
-                if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
-                    position = xy.second;
-                } else {
-                    position = xy.first;
-                }
+            if (!disk_file.is_open()) {
+                throw std::invalid_argument("Invalid file " + filename);
             }
-            uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
-            auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+            disk_file.clear();
 
-            // The final two x values (which are stored in the same location) are hashed
-            std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
-            memcpy(hash_input.data(), challenge, 32);
-            (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
-                    .ToBytes(hash_input.data() + 32);
-            std::vector<unsigned char> hash(picosha2::k_digest_size);
-            picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
-            qualities.emplace_back(hash.data(), 32, 256);
-        }
+            // This tells us how many f7 outputs (and therefore proofs) we have for this
+            // challenge. The expected value is one proof.
+            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
+
+            if (p7_entries.empty()) {
+                return std::vector<LargeBits>();
+            }
+
+            // The last 5 bits of the challenge determine which route we take to get to
+            // our two x values in the leaves.
+            uint8_t last_5_bits = challenge[31] & 0x1f;
+
+            for (uint64_t position : p7_entries) {
+                // This inner loop goes from table 6 to table 1, getting the two backpointers,
+                // and following one of them.
+                for (uint8_t table_index = 6; table_index > 1; table_index--) {
+                    uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
+
+                    auto xy = Encoding::LinePointToSquare(line_point);
+                    assert(xy.first >= xy.second);
+
+                    if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
+                        position = xy.second;
+                    } else {
+                        position = xy.first;
+                    }
+                }
+                uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
+                auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+
+                // The final two x values (which are stored in the same location) are hashed
+                std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
+                memcpy(hash_input.data(), challenge, 32);
+                (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
+                        .ToBytes(hash_input.data() + 32);
+                std::vector<unsigned char> hash(picosha2::k_digest_size);
+                picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
+                qualities.emplace_back(hash.data(), 32, 256);
+            }
+
+        }  // Scope for disk_file
+
+
         return qualities;
     }
 
@@ -255,73 +260,74 @@ public:
         uint64_t sp_interval_iters)
     {
         std::vector<LargeBits> qualities;
+        std::lock_guard<std::mutex> l(_mtx);
+        {
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
 
-        std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-
-        if (!disk_file.is_open()) {
-            throw std::invalid_argument("Invalid file " + filename);
-        }
-        disk_file.clear();
-
-        // This tells us how many f7 outputs (and therefore proofs) we have for this
-        // challenge. The expected value is one proof.
-        std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-
-        if (p7_entries.empty()) {
-            return std::vector<LargeBits>();
-        }
-
-        // The last 5 bits of the challenge determine which route we take to get to
-        // our two x values in the leaves.
-        uint8_t last_5_bits = challenge[31] & 0x1f;
-
-        for (uint64_t position : p7_entries) {
-            // This inner loop goes from table 6 to table 1, getting the two backpointers,
-            // and following one of them.
-            uint64_t org_position = position;
-            for (uint8_t table_index = 6; table_index > 1; table_index--) {
-                uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
-
-                auto xy = Encoding::LinePointToSquare(line_point);
-                assert(xy.first >= xy.second);
-
-                if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
-                    position = xy.second;
-                } else {
-                    position = xy.first;
-                }
+            if (!disk_file.is_open()) {
+                throw std::invalid_argument("Invalid file " + filename);
             }
-            uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
-            auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+            disk_file.clear();
 
-            // The final two x values (which are stored in the same location) are hashed
-            std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
-            memcpy(hash_input.data(), challenge, 32);
-            (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
-                    .ToBytes(hash_input.data() + 32);
-            std::vector<unsigned char> hash(picosha2::k_digest_size);
-            picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
-            //                qualities.emplace_back(hash.data(), 32, 256);
-            LargeBits quality = LargeBits(hash.data(), 32, 256);
-            uint8_t* quality_buf = new uint8_t[32];
-            quality.ToBytes(quality_buf);
-            std::vector<unsigned char> hash_input_c(32 + 32, 0);
-            memcpy(hash_input_c.data(), quality_buf, 32);
-            memcpy(hash_input_c.data() + 32, sp_hash, 32);
-            std::vector<unsigned char> hash_c(picosha2::k_digest_size);
-            picosha2::hash256(
-                    hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
+            // This tells us how many f7 outputs (and therefore proofs) we have for this
+            // challenge. The expected value is one proof.
+            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
-            std::string hex_sp_quality_string("0x");
-            hex_sp_quality_string.append(Util::HexStr(hash_c.data(), 16));
-            uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
+            if (p7_entries.empty()) {
+                return std::vector<LargeBits>();
+            }
 
-            uint128_t pp_s = convert_prover_size(prover_size);
+            // The last 5 bits of the challenge determine which route we take to get to
+            // our two x values in the leaves.
+            uint8_t last_5_bits = challenge[31] & 0x1f;
 
-            double diffdifficulty_c = (double)difficulty /65536;
-            uint64_t sp_quality_string_init_c = sp_quality_string_init / pp_s;
+            for (uint64_t position : p7_entries) {
+                // This inner loop goes from table 6 to table 1, getting the two backpointers,
+                // and following one of them.
+                uint64_t org_position = position;
+                for (uint8_t table_index = 6; table_index > 1; table_index--) {
+                    uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
 
-            uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
+                    auto xy = Encoding::LinePointToSquare(line_point);
+                    assert(xy.first >= xy.second);
+
+                    if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
+                        position = xy.second;
+                    } else {
+                        position = xy.first;
+                    }
+                }
+                uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
+                auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+
+                // The final two x values (which are stored in the same location) are hashed
+                std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
+                memcpy(hash_input.data(), challenge, 32);
+                (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
+                        .ToBytes(hash_input.data() + 32);
+                std::vector<unsigned char> hash(picosha2::k_digest_size);
+                picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
+                //                qualities.emplace_back(hash.data(), 32, 256);
+                LargeBits quality = LargeBits(hash.data(), 32, 256);
+                uint8_t* quality_buf = new uint8_t[32];
+                quality.ToBytes(quality_buf);
+                std::vector<unsigned char> hash_input_c(32 + 32, 0);
+                memcpy(hash_input_c.data(), quality_buf, 32);
+                memcpy(hash_input_c.data() + 32, sp_hash, 32);
+                std::vector<unsigned char> hash_c(picosha2::k_digest_size);
+                picosha2::hash256(
+                        hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
+
+                std::string hex_sp_quality_string("0x");
+                hex_sp_quality_string.append(Util::HexStr(hash_c.data(), 16));
+                uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
+
+                uint128_t pp_s = convert_prover_size(prover_size);
+
+                double diffdifficulty_c = (double)difficulty /65536;
+                uint64_t sp_quality_string_init_c = sp_quality_string_init / pp_s;
+
+                uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
 
 //                std::cout << "diffdifficulty_c:" << diffdifficulty_c
 //                          << "sp_quality_string_init_c:" << sp_quality_string_init_c
@@ -329,13 +335,17 @@ public:
 //                          << "iters:"
 //                          << iters << std::endl;
 
-            if (iters < sp_interval_iters) {
-                // find proof
-                LargeBits proof = GetFullProof_(disk_file, org_position, false);
-                qualities.emplace_back(proof);
-                break;
+                if (iters < sp_interval_iters) {
+                    // find proof
+                    LargeBits proof = GetFullProof_(disk_file, org_position, false);
+                    qualities.emplace_back(proof);
+                    break;
+                }
             }
-        }
+
+        }  // Scope for disk_file
+
+
 
         return qualities;
     }
@@ -349,74 +359,75 @@ public:
             uint64_t sp_interval_iters)
     {
 //        std::vector<LargeBits> qualities;
+        std::lock_guard<std::mutex> l(_mtx);
+        {
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
 
-        std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-
-        if (!disk_file.is_open()) {
-            throw std::invalid_argument("Invalid file " + filename);
-        }
-        disk_file.clear();
-
-        // This tells us how many f7 outputs (and therefore proofs) we have for this
-        // challenge. The expected value is one proof.
-        std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-
-        if (p7_entries.empty()) {
-            return -1;
-        }
-
-        // The last 5 bits of the challenge determine which route we take to get to
-        // our two x values in the leaves.
-        uint8_t last_5_bits = challenge[31] & 0x1f;
-        int q_index = 0;
-
-        for (uint64_t position : p7_entries) {
-            // This inner loop goes from table 6 to table 1, getting the two backpointers,
-            // and following one of them.
-            uint64_t org_position = position;
-            for (uint8_t table_index = 6; table_index > 1; table_index--) {
-                uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
-
-                auto xy = Encoding::LinePointToSquare(line_point);
-                assert(xy.first >= xy.second);
-
-                if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
-                    position = xy.second;
-                } else {
-                    position = xy.first;
-                }
+            if (!disk_file.is_open()) {
+                throw std::invalid_argument("Invalid file " + filename);
             }
-            uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
-            auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+            disk_file.clear();
 
-            // The final two x values (which are stored in the same location) are hashed
-            std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
-            memcpy(hash_input.data(), challenge, 32);
-            (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
-                    .ToBytes(hash_input.data() + 32);
-            std::vector<unsigned char> hash(picosha2::k_digest_size);
-            picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
-            //                qualities.emplace_back(hash.data(), 32, 256);
-            LargeBits quality = LargeBits(hash.data(), 32, 256);
-            uint8_t* quality_buf = new uint8_t[32];
-            quality.ToBytes(quality_buf);
-            std::vector<unsigned char> hash_input_c(32 + 32, 0);
-            memcpy(hash_input_c.data(), quality_buf, 32);
-            memcpy(hash_input_c.data() + 32, sp_hash, 32);
-            std::vector<unsigned char> hash_c(picosha2::k_digest_size);
-            picosha2::hash256(
-                    hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
+            // This tells us how many f7 outputs (and therefore proofs) we have for this
+            // challenge. The expected value is one proof.
+            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
 
-            std::string hex_sp_quality_string("0x");
-            hex_sp_quality_string.append(Util::HexStr(hash_c.data(), 16));
-            uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
+            if (p7_entries.empty()) {
+                return -1;
+            }
 
-            uint128_t pp_s = convert_prover_size(prover_size);
+            // The last 5 bits of the challenge determine which route we take to get to
+            // our two x values in the leaves.
+            uint8_t last_5_bits = challenge[31] & 0x1f;
+            int q_index = 0;
 
-            double diffdifficulty_c = (double)difficulty /65536;
-            uint64_t sp_quality_string_init_c = sp_quality_string_init / pp_s;
+            for (uint64_t position : p7_entries) {
+                // This inner loop goes from table 6 to table 1, getting the two backpointers,
+                // and following one of them.
+                uint64_t org_position = position;
+                for (uint8_t table_index = 6; table_index > 1; table_index--) {
+                    uint128_t line_point = ReadLinePoint(disk_file, table_index, position);
 
-            uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
+                    auto xy = Encoding::LinePointToSquare(line_point);
+                    assert(xy.first >= xy.second);
+
+                    if (((last_5_bits >> (table_index - 2)) & 1) == 0) {
+                        position = xy.second;
+                    } else {
+                        position = xy.first;
+                    }
+                }
+                uint128_t new_line_point = ReadLinePoint(disk_file, 1, position);
+                auto x1x2 = Encoding::LinePointToSquare(new_line_point);
+
+                // The final two x values (which are stored in the same location) are hashed
+                std::vector<unsigned char> hash_input(32 + Util::ByteAlign(2 * k) / 8, 0);
+                memcpy(hash_input.data(), challenge, 32);
+                (LargeBits(x1x2.second, k) + LargeBits(x1x2.first, k))
+                        .ToBytes(hash_input.data() + 32);
+                std::vector<unsigned char> hash(picosha2::k_digest_size);
+                picosha2::hash256(hash_input.begin(), hash_input.end(), hash.begin(), hash.end());
+                //                qualities.emplace_back(hash.data(), 32, 256);
+                LargeBits quality = LargeBits(hash.data(), 32, 256);
+                uint8_t* quality_buf = new uint8_t[32];
+                quality.ToBytes(quality_buf);
+                std::vector<unsigned char> hash_input_c(32 + 32, 0);
+                memcpy(hash_input_c.data(), quality_buf, 32);
+                memcpy(hash_input_c.data() + 32, sp_hash, 32);
+                std::vector<unsigned char> hash_c(picosha2::k_digest_size);
+                picosha2::hash256(
+                        hash_input_c.begin(), hash_input_c.end(), hash_c.begin(), hash_c.end());
+
+                std::string hex_sp_quality_string("0x");
+                hex_sp_quality_string.append(Util::HexStr(hash_c.data(), 16));
+                uint128_t sp_quality_string_init = uint128_t(hex_sp_quality_string);
+
+                uint128_t pp_s = convert_prover_size(prover_size);
+
+                double diffdifficulty_c = (double)difficulty /65536;
+                uint64_t sp_quality_string_init_c = sp_quality_string_init / pp_s;
+
+                uint64_t iters = sp_quality_string_init_c * diffdifficulty_c;
 
 //                std::cout << "diffdifficulty_c:" << diffdifficulty_c
 //                          << "sp_quality_string_init_c:" << sp_quality_string_init_c
@@ -424,16 +435,20 @@ public:
 //                          << "iters:"
 //                          << iters << std::endl;
 
-            if (iters < sp_interval_iters) {
-                return q_index;
-                // find proof
+                if (iters < sp_interval_iters) {
+                    return q_index;
+                    // find proof
 //                LargeBits proof = GetFullProof_(disk_file, org_position, false);
 //                qualities.emplace_back(proof);
 //                break;
 
+                }
+                q_index++;
             }
-            q_index++;
-        }
+
+        }  // Scope for disk_file
+
+
 
         return -1;
     }
@@ -445,41 +460,42 @@ public:
     {
         LargeBits full_proof;
 
-//        std::lock_guard<std::mutex> l(_mtx);
-//        {
-//
-//        }  // Scope for disk_file
-        std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-        disk_file.clear();
+        std::lock_guard<std::mutex> l(_mtx);
+        {
+            std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+            disk_file.clear();
 
-        if (!disk_file.is_open()) {
-            throw std::invalid_argument("Invalid file " + filename);
-        }
+            if (!disk_file.is_open()) {
+                throw std::invalid_argument("Invalid file " + filename);
+            }
 
-        std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
-        if (p7_entries.empty() || index >= p7_entries.size()) {
-            throw std::logic_error("No proof of space for this challenge");
-        }
+            std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
+            if (p7_entries.empty() || index >= p7_entries.size()) {
+                throw std::logic_error("No proof of space for this challenge");
+            }
 
-        // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
-        std::vector<Bits> xs;
-        if (parallel_read) {
-            xs = GetInputs(p7_entries[index], 6);
-        } else {
-            xs = GetInputs(
-                    p7_entries[index],
-                    6,
-                    &disk_file);  // Passing in a disk_file disabled the parallel reads
-        }
+            // Gets the 64 leaf x values, concatenated together into a k*64 bit string.
+            std::vector<Bits> xs;
+            if (parallel_read) {
+                xs = GetInputs(p7_entries[index], 6);
+            } else {
+                xs = GetInputs(
+                        p7_entries[index],
+                        6,
+                        &disk_file);  // Passing in a disk_file disabled the parallel reads
+            }
 
-        // Sorts them according to proof ordering, where
-        // f1(x0) m= f1(x1), f2(x0, x1) m= f2(x2, x3), etc. On disk, they are not stored in
-        // proof ordering, they're stored in plot ordering, due to the sorting in the Compress
-        // phase.
-        std::vector<LargeBits> xs_sorted = ReorderProof(xs);
-        for (const auto& x : xs_sorted) {
-            full_proof += x;
-        }
+            // Sorts them according to proof ordering, where
+            // f1(x0) m= f1(x1), f2(x0, x1) m= f2(x2, x3), etc. On disk, they are not stored in
+            // proof ordering, they're stored in plot ordering, due to the sorting in the Compress
+            // phase.
+            std::vector<LargeBits> xs_sorted = ReorderProof(xs);
+            for (const auto& x : xs_sorted) {
+                full_proof += x;
+            }
+
+        }  // Scope for disk_file
+
         return full_proof;
     }
 

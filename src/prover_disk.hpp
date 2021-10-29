@@ -158,6 +158,9 @@ public:
                 throw std::invalid_argument("Invalid file " + filename);
             }
 
+            char buf[8192];
+            disk_file.rdbuf()->pubsetbuf(buf, sizeof(buf));
+
             // This tells us how many f7 outputs (and therefore proofs) we have for this
             // challenge. The expected value is one proof.
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
@@ -477,6 +480,8 @@ public:
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
             }
+            char buf[8192];
+            disk_file.rdbuf()->pubsetbuf(buf, sizeof(buf));
 
             std::vector<uint64_t> p7_entries = GetP7Entries(disk_file, challenge);
             if (p7_entries.empty() || index >= p7_entries.size()) {
@@ -559,13 +564,14 @@ private:
         disk_file.seekg(seek_location);
 
         if (disk_file.fail()) {
-            std::cout << "goodbit, failbit, badbit, eofbit: "
-                      << (disk_file.rdstate() & std::ifstream::goodbit)
-                      << (disk_file.rdstate() & std::ifstream::failbit)
-                      << (disk_file.rdstate() & std::ifstream::badbit)
-                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
-            throw std::runtime_error(
-                "badbit or failbit after seeking to " + std::to_string(seek_location));
+            disk_file.clear();
+//            std::cout << "goodbit, failbit, badbit, eofbit: "
+//                      << (disk_file.rdstate() & std::ifstream::goodbit)
+//                      << (disk_file.rdstate() & std::ifstream::failbit)
+//                      << (disk_file.rdstate() & std::ifstream::badbit)
+//                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
+//            throw std::runtime_error(
+//                "badbit or failbit after seeking to " + std::to_string(seek_location));
         }
     }
 
@@ -575,14 +581,15 @@ private:
         disk_file.read(reinterpret_cast<char*>(target), size);
 
         if (disk_file.fail()) {
-            std::cout << "goodbit, failbit, badbit, eofbit: "
-                      << (disk_file.rdstate() & std::ifstream::goodbit)
-                      << (disk_file.rdstate() & std::ifstream::failbit)
-                      << (disk_file.rdstate() & std::ifstream::badbit)
-                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
-            throw std::runtime_error(
-                "badbit or failbit after reading size " + std::to_string(size) + " at position " +
-                std::to_string(pos));
+            disk_file.clear();
+//            std::cout << "goodbit, failbit, badbit, eofbit: "
+//                      << (disk_file.rdstate() & std::ifstream::goodbit)
+//                      << (disk_file.rdstate() & std::ifstream::failbit)
+//                      << (disk_file.rdstate() & std::ifstream::badbit)
+//                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
+//            throw std::runtime_error(
+//                "badbit or failbit after reading size " + std::to_string(size) + " at position " +
+//                std::to_string(pos));
         }
     }
 

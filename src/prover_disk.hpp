@@ -57,12 +57,15 @@ public:
         this->filename = filename;
 
         std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+        if (disk_file.fail())
+        {
+            disk_file.clear();
+        }
 
         if (!disk_file.is_open()) {
             throw std::invalid_argument("Invalid file " + filename);
         }
-        disk_file.clear();
-        disk_file.seekg(0, std::ios::beg);
+
         // 19 bytes  - "Proof of Space Plot" (utf-8)
         // 32 bytes  - unique plot id
         // 1 byte    - k
@@ -146,11 +149,14 @@ public:
         std::lock_guard<std::mutex> l(_mtx);
         {
             std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
+            if (disk_file.fail())
+            {
+                disk_file.clear();
+            }
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);
             }
-            disk_file.clear();
 
             // This tells us how many f7 outputs (and therefore proofs) we have for this
             // challenge. The expected value is one proof.
@@ -463,7 +469,10 @@ public:
         std::lock_guard<std::mutex> l(_mtx);
         {
             std::ifstream disk_file(filename, std::ios::in | std::ios::binary);
-            disk_file.clear();
+            if (disk_file.fail())
+            {
+                disk_file.clear();
+            }
 
             if (!disk_file.is_open()) {
                 throw std::invalid_argument("Invalid file " + filename);

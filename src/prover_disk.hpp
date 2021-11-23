@@ -559,37 +559,33 @@ private:
 
     // Using this method instead of simply seeking will prevent segfaults that would arise when
     // continuing the process of looking up qualities.
-    void SafeSeek(std::ifstream& disk_file, uint64_t seek_location)
-    {
+    static void SafeSeek(std::ifstream& disk_file, uint64_t seek_location) {
         disk_file.seekg(seek_location);
 
         if (disk_file.fail()) {
-            disk_file.clear();
-//            std::cout << "goodbit, failbit, badbit, eofbit: "
-//                      << (disk_file.rdstate() & std::ifstream::goodbit)
-//                      << (disk_file.rdstate() & std::ifstream::failbit)
-//                      << (disk_file.rdstate() & std::ifstream::badbit)
-//                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
-//            throw std::runtime_error(
-//                "badbit or failbit after seeking to " + std::to_string(seek_location));
+            std::cout << "goodbit, failbit, badbit, eofbit: "
+                      << (disk_file.rdstate() & std::ifstream::goodbit)
+                      << (disk_file.rdstate() & std::ifstream::failbit)
+                      << (disk_file.rdstate() & std::ifstream::badbit)
+                      << (disk_file.rdstate() & std::ifstream::eofbit)
+                      << std::endl;
+            throw std::runtime_error("badbit or failbit after seeking to " + std::to_string(seek_location));
         }
     }
 
-    void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size)
-    {
+    static void SafeRead(std::ifstream& disk_file, uint8_t* target, uint64_t size) {
         int64_t pos = disk_file.tellg();
         disk_file.read(reinterpret_cast<char*>(target), size);
 
         if (disk_file.fail()) {
-            disk_file.clear();
-//            std::cout << "goodbit, failbit, badbit, eofbit: "
-//                      << (disk_file.rdstate() & std::ifstream::goodbit)
-//                      << (disk_file.rdstate() & std::ifstream::failbit)
-//                      << (disk_file.rdstate() & std::ifstream::badbit)
-//                      << (disk_file.rdstate() & std::ifstream::eofbit) << std::endl;
-//            throw std::runtime_error(
-//                "badbit or failbit after reading size " + std::to_string(size) + " at position " +
-//                std::to_string(pos));
+            std::cout << "goodbit, failbit, badbit, eofbit: "
+                      << (disk_file.rdstate() & std::ifstream::goodbit)
+                      << (disk_file.rdstate() & std::ifstream::failbit)
+                      << (disk_file.rdstate() & std::ifstream::badbit)
+                      << (disk_file.rdstate() & std::ifstream::eofbit)
+                      << std::endl;
+            throw std::runtime_error("badbit or failbit after reading size " +
+                                     std::to_string(size) + " at position " + std::to_string(pos));
         }
     }
 
@@ -624,8 +620,7 @@ private:
         SafeRead(disk_file, (uint8_t*)&encoded_deltas_size, sizeof(uint16_t));
 
         if (encoded_deltas_size * 8 > max_deltas_size_bits) {
-            throw std::invalid_argument(
-                "Invalid size for deltas: " + std::to_string(encoded_deltas_size));
+            throw std::invalid_argument("Invalid size for deltas: " + std::to_string(encoded_deltas_size));
         }
 
         std::vector<uint8_t> deltas;
@@ -642,7 +637,7 @@ private:
             // Decodes the deltas
             double R = kRValues[table_index - 1];
             deltas =
-                Encoding::ANSDecodeDeltas(deltas_bin, encoded_deltas_size, kEntriesPerPark - 1, R);
+                    Encoding::ANSDecodeDeltas(deltas_bin, encoded_deltas_size, kEntriesPerPark - 1, R);
         }
 
         uint32_t start_bit = 0;
@@ -674,15 +669,15 @@ private:
     // Gets the P7 positions of the target f7 entries. Uses the C3 encoded bitmask read from disk.
     // A C3 park is a list of deltas between p7 entries, ANS encoded.
     std::vector<uint64_t> GetP7Positions(
-        uint64_t curr_f7,
-        uint64_t f7,
-        uint64_t curr_p7_pos,
-        uint8_t* bit_mask,
-        uint16_t encoded_size,
-        uint64_t c1_index) const
+            uint64_t curr_f7,
+            uint64_t f7,
+            uint64_t curr_p7_pos,
+            uint8_t* bit_mask,
+            uint16_t encoded_size,
+            uint64_t c1_index) const
     {
         std::vector<uint8_t> deltas =
-            Encoding::ANSDecodeDeltas(bit_mask, encoded_size, kCheckpoint1Interval, kC3R);
+                Encoding::ANSDecodeDeltas(bit_mask, encoded_size, kCheckpoint1Interval, kC3R);
         std::vector<uint64_t> p7_positions;
         bool surpassed_f7 = false;
         for (uint8_t delta : deltas) {
@@ -810,30 +805,52 @@ private:
 
             SafeRead(disk_file, encoded_size_buf, 2);
             encoded_size = Bits(encoded_size_buf, 2, 16).GetValue();
+
+            // Avoid telling GetP7Positions and functions it uses that we have more
+            // bytes than we allocated for bit_mask above.
+            if (encoded_size > c3_entry_size - 2) {
+                return std::vector<uint64_t>();
+            }
+
             SafeRead(disk_file, bit_mask, c3_entry_size - 2);
 
             p7_positions =
-                GetP7Positions(curr_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
+                    GetP7Positions(curr_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
 
             SafeRead(disk_file, encoded_size_buf, 2);
             encoded_size = Bits(encoded_size_buf, 2, 16).GetValue();
+
+            // Avoid telling GetP7Positions and functions it uses that we have more
+            // bytes than we allocated for bit_mask above.
+            if (encoded_size > c3_entry_size - 2) {
+                return std::vector<uint64_t>();
+            }
+
             SafeRead(disk_file, bit_mask, c3_entry_size - 2);
 
             c1_index++;
             curr_p7_pos = c1_index * kCheckpoint1Interval;
             auto second_positions =
-                GetP7Positions(next_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
+                    GetP7Positions(next_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
+
             p7_positions.insert(
-                p7_positions.end(), second_positions.begin(), second_positions.end());
+                    p7_positions.end(), second_positions.begin(), second_positions.end());
 
         } else {
             SafeSeek(disk_file, table_begin_pointers[10] + c1_index * c3_entry_size);
             SafeRead(disk_file, encoded_size_buf, 2);
             encoded_size = Bits(encoded_size_buf, 2, 16).GetValue();
+
+            // Avoid telling GetP7Positions and functions it uses that we have more
+            // bytes than we allocated for bit_mask above.
+            if (encoded_size > c3_entry_size - 2) {
+                return std::vector<uint64_t>();
+            }
+
             SafeRead(disk_file, bit_mask, c3_entry_size - 2);
 
             p7_positions =
-                GetP7Positions(curr_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
+                    GetP7Positions(curr_f7, f7, curr_p7_pos, bit_mask, encoded_size, c1_index);
         }
 
         // p7_positions is a list of all the positions into table P7, where the output is equal to
@@ -917,18 +934,18 @@ private:
                 // one goes on the right
                 if (std::get<0>(results[i]).GetValue() < std::get<0>(results[i + 1]).GetValue()) {
                     new_output = f.CalculateBucket(
-                        std::get<0>(results[i]),
-                        std::get<1>(results[i]),
-                        std::get<1>(results[i + 1]));
+                            std::get<0>(results[i]),
+                            std::get<1>(results[i]),
+                            std::get<1>(results[i + 1]));
                     uint64_t start = (uint64_t)k * i * ((uint64_t)1 << (table_index - 2));
                     uint64_t end = (uint64_t)k * (i + 2) * ((uint64_t)1 << (table_index - 2));
                     new_xs += xs.Slice(start, end);
                 } else {
                     // Here we switch the left and the right
                     new_output = f.CalculateBucket(
-                        std::get<0>(results[i + 1]),
-                        std::get<1>(results[i + 1]),
-                        std::get<1>(results[i]));
+                            std::get<0>(results[i + 1]),
+                            std::get<1>(results[i + 1]),
+                            std::get<1>(results[i]));
                     uint64_t start = (uint64_t)k * i * ((uint64_t)1 << (table_index - 2));
                     uint64_t start2 = (uint64_t)k * (i + 1) * ((uint64_t)1 << (table_index - 2));
                     uint64_t end = (uint64_t)k * (i + 2) * ((uint64_t)1 << (table_index - 2));
@@ -954,10 +971,7 @@ private:
     // all of the leaves (x values). For example, for depth=5, it fetches the position-th
     // entry in table 5, reading the two back pointers from the line point, and then
     // recursively calling GetInputs for table 4.
-    std::vector<Bits> GetInputs(
-        uint64_t position,
-        uint8_t depth,
-        std::ifstream* disk_file = nullptr)
+    std::vector<Bits> GetInputs(uint64_t position, uint8_t depth, std::ifstream* disk_file = nullptr)
     {
         uint128_t line_point;
 
@@ -981,21 +995,9 @@ private:
             std::vector<Bits> left, right;
             if (!disk_file) {
                 // no disk_file, so we do parallel reads here
-                auto left_fut = std::async(
-                    std::launch::async,
-                    &DiskProver::GetInputs,
-                    this,
-                    (uint64_t)xy.second,
-                    (uint8_t)(depth - 1),
-                    nullptr);
-                auto right_fut = std::async(
-                    std::launch::async,
-                    &DiskProver::GetInputs,
-                    this,
-                    (uint64_t)xy.first,
-                    (uint8_t)(depth - 1),
-                    nullptr);
-                left = left_fut.get();    // y
+                auto left_fut=std::async(std::launch::async, &DiskProver::GetInputs,this, (uint64_t)xy.second, (uint8_t)(depth - 1), nullptr);
+                auto right_fut=std::async(std::launch::async, &DiskProver::GetInputs,this, (uint64_t)xy.first, (uint8_t)(depth - 1), nullptr);
+                left = left_fut.get();  // y
                 right = right_fut.get();  // x
             } else {
                 left = GetInputs(xy.second, depth - 1, disk_file);  // y
@@ -1005,6 +1007,7 @@ private:
             return left;
         }
     }
+
 };
 
 #endif  // SRC_CPP_PROVER_DISK_HPP_
